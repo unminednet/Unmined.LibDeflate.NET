@@ -1,4 +1,6 @@
-# LibDeflate.NET [![nuget stable](https://img.shields.io/nuget/v/LibDeflate.NET.svg?style=flat)](https://www.nuget.org/packages/LibDeflate.NET)
+# Unmined.LibDeflate.NET 
+
+This package is a [LibDeflate.NET](https://github.com/jzebedee/LibDeflate.NET) fork used by Unmined. 
 
 LibDeflate.NET is a managed wrapper around [libdeflate](https://github.com/ebiggers/libdeflate), a native library for fast, whole-buffer DEFLATE-based compression and decompression.
 
