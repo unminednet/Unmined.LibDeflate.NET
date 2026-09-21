@@ -1,0 +1,101 @@
+name: Manual build, test, and publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the package to GitHub Packages
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build and test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore LibDeflate.sln
+
+      - name: Build
+        run: dotnet build LibDeflate.sln --no-restore --configuration Release
+
+      - name: Test
+        run: >
+          dotnet test LibDeflate.sln
+          --no-restore
+          --no-build
+          --configuration Release
+          --logger trx
+          --results-directory TestResults
+
+      - name: Upload test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults-${{ matrix.os }}
+          path: TestResults
+          if-no-files-found: ignore
+
+  publish:
+    name: Pack and publish
+    if: ${{ inputs.publish }}
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: github-packages
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Require the default branch
+        env:
+          CURRENT_BRANCH: ${{ github.ref_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [ "$CURRENT_BRANCH" != "$DEFAULT_BRANCH" ]; then
+            echo "Packages may only be published from $DEFAULT_BRANCH."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Pack
+        run: >
+          dotnet pack src/LibDeflate/LibDeflate.csproj
+          --configuration Release
+          --output pkg
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unmined.LibDeflate.NET
+          path: pkg/*
+
+      - name: Publish to GitHub Packages
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          dotnet nuget push pkg/*.nupkg
+          --api-key "$NUGET_AUTH_TOKEN"
+          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
