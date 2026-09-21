@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   verify:
@@ -28,6 +29,17 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+
+      - name: Authenticate to GitHub Packages
+        shell: pwsh
+        env:
+          GITHUB_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          dotnet nuget update source github
+          --username "${{ github.actor }}"
+          --password "$env:GITHUB_PACKAGES_TOKEN"
+          --store-password-in-clear-text
+          --configfile NuGet.config
 
       - name: Restore
         run: dotnet restore LibDeflate.sln
@@ -79,6 +91,17 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+
+      - name: Authenticate to GitHub Packages
+        shell: pwsh
+        env:
+          GITHUB_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          dotnet nuget update source github
+          --username "${{ github.actor }}"
+          --password "$env:GITHUB_PACKAGES_TOKEN"
+          --store-password-in-clear-text
+          --configfile NuGet.config
 
       - name: Pack
         run: >
