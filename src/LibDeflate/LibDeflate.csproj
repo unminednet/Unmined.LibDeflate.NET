@@ -37,7 +37,7 @@
 
   <!-- Regular dependencies -->
   <ItemGroup>
-    <PackageReference Include="Unmined.LibDeflate.Native" Version="1.26.0" />
+    <PackageReference Include="Unmined.LibDeflate.Native" Version="1.26.1" />
   </ItemGroup>
 
 </Project>
